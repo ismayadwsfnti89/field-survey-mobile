@@ -1,7 +1,9 @@
 import 'package:go_router/go_router.dart';
+
 import '../screens/splash/splash_screen.dart';
 import '../screens/auth/login.dart';
-import '../screens/dashboard/dashboard_screen.dart';
+import '../screens/auth/register_page.dart';
+import '../screens/dashboard/dashboard_page.dart';
 import '../models/user_model.dart';
 import 'app_routes.dart';
 
@@ -11,23 +13,23 @@ class AppPages {
     routes: [
       GoRoute(
         path: AppRoutes.splash,
-        builder: (context, state) => const SplashScreen(),
-      ), // GoRoute
-
+        builder: (context, state) =>  SplashScreen(),
+      ),
       GoRoute(
         path: AppRoutes.login,
-        builder: (context, state) => const LoginScreen(),
-      ), // GoRoute
-
+        builder: (context, state) =>  LoginPage(),
+      ),
+      GoRoute(
+        path: AppRoutes.register,
+        builder: (context, state) =>  RegisterPage(),
+      ),
       GoRoute(
         path: AppRoutes.dashboard,
-        // Data user dikirim lewat parameter "extra" pas navigasi (context.go(..., extra: user))
-        // Di sini kita ambil lagi dan "cast" jadi tipe UserModel
         builder: (context, state) {
           final user = state.extra as UserModel;
-          return DashboardScreen(user: user);
+          return DashboardPage(user: user);
         },
-      ), // GoRoute
+      ),
     ],
-  ); // GoRouter
+  );
 }
