@@ -10,60 +10,6 @@ class RegisterPage extends StatefulWidget {
 class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return const Scaffold();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// import 'package:flutter/material.dart';
-
-// class RegisterPage extends StatelessWidget {
-//   const RegisterPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: const Text("Register"), centerTitle: true),
-//       body: const Center(
-//         child: Text(
-//           "Halaman Register (belum diimplementasikan)",
-//           style: TextStyle(fontSize: 16),
-//         ),
-//       ),
-//     );
-//   }
-// }
