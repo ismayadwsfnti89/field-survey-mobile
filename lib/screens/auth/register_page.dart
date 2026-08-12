@@ -27,7 +27,7 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  // TEXT FIELD
+  // REUSABLE TEXT FIELD WIDGET
   Widget buildTextField({
     required TextEditingController controller,
     required String label,
@@ -50,14 +50,14 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  // REGISTER
+  // REGISTER FUNCTION
   Future<void> register() async {
-    // Validasi form
+    // 1. Validasi form
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
-    // Validasi jenis kelamin
+    // 2. Validasi dropdown gender
     if (gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -73,7 +73,7 @@ class _RegisterPageState extends State<RegisterPage> {
     });
 
     try {
-      // REQUEST KE REST API
+      // 3. Request POST ke REST API
       final response = await http.post(
         Uri.parse('https://sijala.biz.id/api/v1/register'),
         headers: {
@@ -88,31 +88,25 @@ class _RegisterPageState extends State<RegisterPage> {
         }),
       );
 
-      // RESPONSE JSON
+      // 4. Response JSON Decode
       final data = jsonDecode(response.body);
 
-      // REGISTER BERHASIL
+      // 5. Cek respon sukses
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (data['status'] == true) {
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                data['message'] ?? 'Registrasi berhasil.',
-              ),
+              content: Text(data['message'] ?? 'Registrasi berhasil.'),
               backgroundColor: Colors.green,
             ),
           );
           // Kembali ke halaman Login
           Navigator.pop(context);
         } else {
-          throw Exception(
-            data['message'] ?? 'Registrasi gagal.',
-          );
+          throw Exception(data['message'] ?? 'Registrasi gagal.');
         }
-      }
-      // REGISTER GAGAL
-      else {
+      } else {
         final message = data['message'] ?? 'Registrasi gagal.';
         throw Exception(message);
       }
@@ -120,9 +114,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            e.toString().replaceFirst('Exception: ', ''),
-          ),
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
         ),
       );
@@ -135,9 +127,8 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  // BUILD
   @override
-  Widget build (BuildContext context) {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Register'),
@@ -170,7 +161,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-                
+
                 // NAMA
                 buildTextField(
                   controller: nameController,
@@ -183,12 +174,12 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
-                
+
                 // JENIS KELAMIN
                 Padding(
                   padding: const EdgeInsets.only(bottom: 24),
                   child: DropdownButtonFormField<String>(
-                    initialValue: gender,
+                    value: gender,
                     decoration: const InputDecoration(
                       labelText: 'Jenis Kelamin',
                       prefixIcon: Icon(Icons.wc),
@@ -217,7 +208,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                 ),
-                
+
                 // EMAIL
                 buildTextField(
                   controller: emailController,
@@ -234,7 +225,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     return null;
                   },
                 ),
-                
+
                 // NOMOR WHATSAPP
                 buildTextField(
                   controller: phoneController,
@@ -245,11 +236,14 @@ class _RegisterPageState extends State<RegisterPage> {
                     if (value == null || value.trim().isEmpty) {
                       return 'Nomor WhatsApp wajib diisi';
                     }
+                    if (value.trim().length < 10) {
+                      return 'Nomor WhatsApp minimal 10 digit';
+                    }
                     return null;
                   },
                 ),
                 const SizedBox(height: 10),
-                
+
                 // BUTTON REGISTER
                 SizedBox(
                   height: 50,
@@ -266,9 +260,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           )
                         : const Text(
                             'Daftar Sekarang',
-                            style: TextStyle(
-                              fontSize: 16,
-                            ),
+                            style: TextStyle(fontSize: 16),
                           ),
                   ),
                 ),

@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_appl_latihan/screens/dashboard1.dart';
-import 'package:flutter_appl_latihan/screens/register_page.dart';
+import 'package:flutter_application/screens/auth/register_page.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+// Relative import agar tidak tergantung nama package di pubspec.yaml
+import '../dashboard/dashboard_page.dart';
+import '../auth/login.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,26 +17,28 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  bool isLoading = false;
-  bool obscurePassword = true;
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  bool _obscurePassword = true;
 
-  // LOGIN REST API
-  // ==========================================
-  Future<void> login() async {
-    // Validasi form
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     setState(() {
-      isLoading = true;
+      _isLoading = true;
     });
 
     try {
-      // ==========================================
-      // REQUEST KE REST API
       final response = await http.post(
         Uri.parse('https://sijala.biz.id/api/v1/login'),
         headers: {
@@ -41,138 +46,106 @@ class _LoginPageState extends State<LoginPage> {
           'Content-Type': 'application/json',
         },
         body: jsonEncode({
-          'email': emailController.text.trim(),
-          'password': passwordController.text,
+          'email': _emailController.text.trim(),
+          'password': _passwordController.text.trim(),
         }),
       );
 
-      // ==========================================
-      // RESPONSE JSON
       final data = jsonDecode(response.body);
 
-      // LOGIN BERHASIL
-      // ==========================================
-      if (response.statusCode == 200) {
-        final token = data['token'];
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (data['status'] == true || data['token'] != null) {
+          // Simpan token/sesi ke SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          if (data['token'] != null) {
+            await prefs.setString('token', data['token'].toString());
+          }
+          if (data['user'] != null) {
+            await prefs.setString('user', jsonEncode(data['user']));
+          }
 
-        if (token == null) {
-          throw Exception('Token tidak ditemukan.');
-        }
+          if (!mounted) return;
 
-        // SIMPAN TOKEN
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-          'token',
-          token.toString(),
-        );
-
-        // SIMPAN DATA USER
-        if (data['user'] != null) {
-          await prefs.setString(
-            'user',
-            jsonEncode(data['user']),
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(data['message'] ?? 'Login berhasil!'),
+              backgroundColor: Colors.green,
+            ),
           );
+
+          // Pindah ke Dashboard
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DashboardPage(),
+            ),
+          );
+        } else {
+          throw Exception(data['message'] ?? 'Login gagal. Periksa data Anda.');
         }
-
-        if (!mounted) return;
-
-        // PESAN LOGIN BERHASIL
-        // ==========================================
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login berhasil'),
-            backgroundColor: Colors.green,
-          ),
-        );
-
-        // MASUK DASHBOARD
-        // ==========================================
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const DashboardPage(),
-          ),
-        );
-      }
-      // LOGIN GAGAL
-      // ==========================================
-      else {
-        final message = data['message'] ?? 'Email atau password salah.';
+      } else {
+        final message = data['message'] ?? 'Login gagal. Email atau password salah.';
         throw Exception(message);
       }
     } catch (e) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            e.toString().replaceFirst(
-                  'Exception: ',
-                  '',
-                ),
-          ),
+          content: Text(e.toString().replaceFirst('Exception: ', '')),
           backgroundColor: Colors.red,
         ),
       );
     } finally {
       if (mounted) {
         setState(() {
-          isLoading = false;
+          _isLoading = false;
         });
       }
     }
   }
 
   @override
-  void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Login'),
-        centerTitle: true,
-      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const Icon(
-                    Icons.add_box,
+                    Icons.lock_person_rounded,
                     size: 90,
                     color: Colors.blue,
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
                   const Text(
-                    'FIELD SURVEY',
+                    'Field Survey App',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 24,
+                      fontSize: 26,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Selamat Datang!',
+                    'Silakan login untuk melanjutkan',
                     textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey),
                   ),
-                  const SizedBox(height: 16),
-                  // EMAIL
+                  const SizedBox(height: 32),
+
+                  // Email Field
                   TextFormField(
-                    controller: emailController,
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Email',
-                      prefixIcon: Icon(Icons.email),
+                      prefixIcon: Icon(Icons.email_outlined),
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
@@ -186,26 +159,25 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  // PASSWORD
+
+                  // Password Field
                   TextFormField(
-                    controller: passwordController,
-                    obscureText: obscurePassword,
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock),
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          obscurePassword
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
                         ),
                         onPressed: () {
                           setState(() {
-                            obscurePassword = !obscurePassword;
+                            _obscurePassword = !_obscurePassword;
                           });
                         },
                       ),
-                      border: const OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
@@ -214,13 +186,14 @@ class _LoginPageState extends State<LoginPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
-                  // LOGIN BUTTON
+                  const SizedBox(height: 24),
+
+                  // Login Button
                   SizedBox(
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: isLoading ? null : login,
-                      child: isLoading
+                      onPressed: _isLoading ? null : _login,
+                      child: _isLoading
                           ? const SizedBox(
                               width: 24,
                               height: 24,
@@ -230,27 +203,30 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                             )
                           : const Text(
-                              'Login',
-                              style: TextStyle(
-                                fontSize: 16,
-                              ),
+                              'Masuk',
+                              style: TextStyle(fontSize: 16),
                             ),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  // REGISTER
-                  TextButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RegisterPage(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Belum punya akun? Daftar',
-                    ),
+
+                  // Register Navigation
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text('Belum punya akun? '),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                        child: const Text('Daftar di sini'),
+                      ),
+                    ],
                   ),
                 ],
               ),

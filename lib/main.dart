@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'routes/app_pages.dart';
+import 'screens/auth/login.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -10,11 +11,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      title: 'Field Survey',
+    return MaterialApp(
+      title: 'Field Survey Mobile',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(colorSchemeSeed: Colors.blue, useMaterial3: true),
-      routerConfig: AppPages.router,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        useMaterial3: true,
+      ),
+      home: const LoginPage(),
     );
   }
 }

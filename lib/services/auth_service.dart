@@ -13,8 +13,6 @@ class AuthService {
       throw Exception('Gagal terhubung ke server (${response.statusCode})');
     }
 
-    // Deteksi otomatis bentuk response: bisa array langsung,
-    // atau dibungkus object seperti {data: [...]} / {success, data}
     final decoded = jsonDecode(response.body);
     late final List<dynamic> data;
 
@@ -37,8 +35,11 @@ class AuthService {
     final List<UserModel> users =
         data.map((json) => UserModel.fromJson(json)).toList();
 
+    // Penanganan null-safe pada user.email
     final matchedUser = users.where(
-      (user) => user.email.toLowerCase() == email.toLowerCase(),
+      (user) =>
+          user.email != null &&
+          user.email!.toLowerCase() == email.trim().toLowerCase(),
     );
 
     if (matchedUser.isEmpty) {
